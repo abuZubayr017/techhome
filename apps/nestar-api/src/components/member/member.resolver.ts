@@ -1,6 +1,6 @@
 import { Args, InputType, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { MemberService } from './member.service';
-import { AgentsInquiry, LoginInput, MemberInput, MembersInquiry } from '../../libs/dto/member/member.input';
+import { LoginInput, MemberInput, MembersInquiry } from '../../libs/dto/member/member.input';
 import { Member, Members } from '../../libs/dto/member/member';
 import { UseGuards } from '@nestjs/common';
 import { AuthGuard } from '../auth/guards/auth.guard';
@@ -39,14 +39,6 @@ export class MemberResolver {
 		return `Hi ${memberNick}`;
 	}
 
-	@Roles(MemberType.USER, MemberType.AGENT)
-	@UseGuards(RolesGuard)
-	@Query(() => String)
-	public async checkAuthRoles(@AuthMember() authMember: Member): Promise<string> {
-		console.log('QUERY: CheckAuthRoles');
-		return `Hi ${authMember.memberNick}, you're ${authMember.memberType}, id: ${authMember._id}`;
-	}
-
 	@UseGuards(AuthGuard)
 	@Mutation(() => Member)
 	public async updateMember(
@@ -65,22 +57,15 @@ export class MemberResolver {
 		return await this.memberService.getMember(memberId, targetId);
 	}
 
-	@UseGuards(WithoutGuard)
-	@Query(() => Members)
-	public async getAgents(@Args('input') input: AgentsInquiry, @AuthMember('_id') memberId: ObjectId): Promise<Members> {
-		console.log('Query: getAgents');
-		return await this.memberService.getAgents(memberId, input);
-	}
-
 	@UseGuards(AuthGuard)
 	@Mutation(() => Member)
 	public async likeTargetMember(
-		@Args("memberId") input:string,
-		@AuthMember('_id') memberId:ObjectId
-	):Promise<Member> {
-		console.log("MUTATION: LikeTargetMember");
-		const likeRefId = shapeIntoMongoObjectId(input)
-		return await this.memberService.likeTargetMember(memberId, likeRefId)
+		@Args('memberId') input: string,
+		@AuthMember('_id') memberId: ObjectId,
+	): Promise<Member> {
+		console.log('MUTATION: LikeTargetMember');
+		const likeRefId = shapeIntoMongoObjectId(input);
+		return await this.memberService.likeTargetMember(memberId, likeRefId);
 	}
 
 	/** ADMIN **/
